@@ -8,11 +8,12 @@ module Deliver
   class SyncAppPreviews
     UploadPreviewJob = Struct.new(:localization, :preview_set, :video_path, :frame_time_code)
 
-    def initialize(app:, platform:, app_previews_path:, preview_frame_time_code: nil, overwrite_preview_videos: false)
+    def initialize(app:, platform:, app_previews_path:, preview_frame_time_code: nil, overwrite_preview_videos: false, wait_for_processing: true)
       @app = app
       @platform = platform
       @app_previews_path = app_previews_path
-      @frame_time_code = preview_frame_time_code
+      @wait_for_processing = wait_for_processing
+      @frame_time_code = wait_for_processing ? preview_frame_time_code : nil
       @overwrite = overwrite_preview_videos
     end
 
@@ -24,6 +25,10 @@ module Deliver
       locale_by_code = localizations.each_with_object({}) { |l, h| h[l.locale] = l }
 
       video_previews_per_locale = discover_videos(@app_previews_path)
+      missing_locales = video_previews_per_locale.keys - locale_by_code.keys
+      if !@wait_for_processing && !missing_locales.empty?
+        UI.user_error!("App Preview locales are missing from App Store Connect: #{missing_locales.join(', ')}")
+      end
       if video_previews_per_locale.empty?
         UI.message("No preview videos found under '#{@app_previews_path}'.")
         return
@@ -45,7 +50,7 @@ module Deliver
       worker = FastlaneCore::QueueWorker.new do |job|
         begin
           UI.message("Uploading preview video '#{File.basename(job.video_path)}' for locale #{job.localization.locale} (set #{job.preview_set.preview_type})...")
-          job.preview_set.upload_preview(path: job.video_path, frame_time_code: job.frame_time_code)
+          job.preview_set.upload_preview(path: job.video_path, frame_time_code: job.frame_time_code, wait_for_processing: @wait_for_processing)
           UI.message("Uploaded preview video '#{File.basename(job.video_path)}' for locale #{job.localization.locale} (set #{job.preview_set.preview_type}).")
         rescue => e
           UI.error("Failed to upload '#{job.video_path}': #{e.class} - #{e.message}")
@@ -71,6 +76,7 @@ module Deliver
       end
 
       UI.success("Successfully uploaded and sorted App Preview videos.")
+      UI.important('Apple preview processing and still-frame selection were not awaited; check App Store Connect before submission.') unless @wait_for_processing
     end
 
     private

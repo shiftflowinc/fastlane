@@ -53,7 +53,8 @@ module Deliver
         localizations = version.get_app_store_version_localizations
       end
 
-      upload_screenshots(localizations, screenshots_per_language, options[:screenshot_processing_timeout])
+      upload_screenshots(localizations, screenshots_per_language, options[:screenshot_processing_timeout],
+                         wait_for_processing: !options[:skip_waiting_for_screenshot_processing])
 
       Helper.with_loading_indicator("Sorting screenshots uploaded...") do
         sort_screenshots(localizations)
@@ -109,7 +110,7 @@ module Deliver
       end
     end
 
-    def upload_screenshots(localizations, screenshots_per_language, timeout_seconds, tries: 5)
+    def upload_screenshots(localizations, screenshots_per_language, timeout_seconds, tries: 5, wait_for_processing: true)
       tries -= 1
 
       # Upload screenshots
@@ -120,6 +121,7 @@ module Deliver
           job.app_screenshot_set.upload_screenshot(path: job.path, wait_for_processing: false)
           UI.message("Uploaded '#{job.path}'... (#{Time.now - start_time} secs)")
         rescue => error
+          raise unless wait_for_processing
           UI.error(error)
         end
       end
@@ -156,6 +158,11 @@ module Deliver
       worker.start
 
       UI.verbose('Uploading jobs are completed')
+
+      unless wait_for_processing
+        UI.important('Screenshot uploads accepted. Apple processing was not awaited; check App Store Connect before submission.')
+        return
+      end
 
       states = Helper.with_loading_indicator("Waiting for all the screenshots to finish being processed...") do
         wait_for_complete(iterator, timeout_seconds)

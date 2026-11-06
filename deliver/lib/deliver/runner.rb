@@ -177,7 +177,8 @@ module Deliver
           platform: Spaceship::ConnectAPI::Platform.map(options[:platform]),
           app_previews_path: options[:app_previews_path],
           preview_frame_time_code: options[:preview_frame_time_code],
-          overwrite_preview_videos: options[:overwrite_preview_videos]
+          overwrite_preview_videos: options[:overwrite_preview_videos],
+          wait_for_processing: !options[:skip_waiting_for_app_preview_processing]
         )
         previews.sync_from_path
       end

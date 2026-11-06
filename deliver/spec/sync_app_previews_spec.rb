@@ -50,7 +50,7 @@ describe Deliver::SyncAppPreviews do
         type = attributes[:previewType]
         # use a struct-like mock to track uploads per set
         set = double("Set-#{loc.locale}-#{type}", preview_type: type, app_previews: [], locale: loc.locale)
-        allow(set).to receive(:upload_preview) do |path:, frame_time_code:|
+        allow(set).to receive(:upload_preview) do |path:, frame_time_code:, wait_for_processing:|
           # simulate that an AppPreview object is returned
           uploaded_files_by_locale_and_type[loc.locale][type] << File.basename(path) if uploaded_files_by_locale_and_type
           double("AppPreview", file_name: File.basename(path))
@@ -298,7 +298,7 @@ describe Deliver::SyncAppPreviews do
 
     existing_set = double("ExistingSet", preview_type: device, app_previews: [existing_preview1, existing_preview2])
     # mock upload/reorder on existing set since overwrite will reuse the set
-    allow(existing_set).to receive(:upload_preview) do |path:, frame_time_code:|
+    allow(existing_set).to receive(:upload_preview) do |path:, frame_time_code:, wait_for_processing:|
       double("AppPreview", file_name: File.basename(path))
     end
     allow(existing_set).to receive(:reorder_previews) { existing_set }

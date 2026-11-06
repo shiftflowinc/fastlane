@@ -165,6 +165,10 @@ module Deliver
                                      description: "Clear all previously uploaded App Preview videos before uploading the new ones",
                                      type: Boolean,
                                      default_value: false),
+        FastlaneCore::ConfigItem.new(key: :skip_waiting_for_app_preview_processing,
+                                     description: "Return after App Preview uploads are accepted, without waiting for processing or selecting a still frame",
+                                     type: Boolean,
+                                     default_value: false),
 
         # skip
         FastlaneCore::ConfigItem.new(key: :skip_binary_upload,
@@ -205,6 +209,10 @@ module Deliver
                                      description: "Timeout in seconds to wait before considering screenshot processing as failed, used to handle cases where uploads to the App Store are stuck in processing",
                                      type: Integer,
                                      default_value: 3600),
+        FastlaneCore::ConfigItem.new(key: :skip_waiting_for_screenshot_processing,
+                                     description: "Return after screenshot uploads are accepted and sorted, without waiting for processing or retrying processing failures",
+                                     type: Boolean,
+                                     default_value: false),
         FastlaneCore::ConfigItem.new(key: :sync_screenshots,
                                      env_name: "DELIVER_SYNC_SCREENSHOTS",
                                      description: "Sync screenshots with local ones. This is currently beta option so set true to 'FASTLANE_ENABLE_BETA_DELIVER_SYNC_SCREENSHOTS' environment variable as well",

@@ -378,7 +378,8 @@ describe Deliver::Runner do
         platform: Spaceship::ConnectAPI::Platform.map(options[:platform]),
         app_previews_path: options[:app_previews_path],
         preview_frame_time_code: options[:preview_frame_time_code],
-        overwrite_preview_videos: options[:overwrite_preview_videos]
+        overwrite_preview_videos: options[:overwrite_preview_videos],
+        wait_for_processing: true
       ).and_return(previews_double)
       expect(previews_double).to receive(:sync_from_path)
 
