@@ -92,7 +92,7 @@ module Deliver
       path = File.expand_path(entry[:path])
       # Reuse a universal image for both placements and across localizations.
       image = uploaded[path] ||= Spaceship::ConnectAPI::AppAssetLibraryImage.create(
-        app_asset_library_id: library.id, path: path, category: 'CREATIVE_ASSETS'
+        app_asset_library_id: library.id, path: path, category: 'CREATIVE_ASSETS', processing_timeout: 900
       )
       unless plan[:specs].include?(image.spec_id)
         UI.user_error!("Uploaded image '#{image.id}' is not compatible with #{entry[:placement_type]} / #{entry[:placement_group]}; all existing placements were preserved")
