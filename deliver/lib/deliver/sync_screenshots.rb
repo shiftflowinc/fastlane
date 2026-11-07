@@ -29,9 +29,10 @@ module Deliver
       end
     end
 
-    def initialize(app:, platform:)
+    def initialize(app:, platform:, wait_for_processing: true)
       @app = app
       @platform = platform
+      @wait_for_processing = wait_for_processing
     end
 
     def sync_from_path(screenshots_path)
@@ -41,6 +42,7 @@ module Deliver
     end
 
     def sync(screenshots)
+      return if screenshots.empty?
       UI.important('This is currently a beta feature in fastlane. This may cause some errors on your environment.')
 
       unless FastlaneCore::Feature.enabled?('FASTLANE_ENABLE_BETA_DELIVER_SYNC_SCREENSHOTS')
@@ -55,7 +57,7 @@ module Deliver
       enable_localizations(screenshots_per_language.keys)
 
       # create iterator
-      localizations = fetch_localizations
+      localizations = fetch_localizations.select { |localization| screenshots_per_language.key?(localization.locale) }
       iterator = Deliver::AppScreenshotIterator.new(localizations)
 
       # sync local screenshots with remote settings by deleting and uploading
@@ -81,6 +83,10 @@ module Deliver
     def replace_screenshots(iterator, screenshots, retries = 3)
       # delete and upload screenshots to get App Store Connect in sync
       do_replace_screenshots(iterator, screenshots, create_delete_worker, create_upload_worker)
+      unless @wait_for_processing
+        UI.important('Screenshot changes accepted. Apple processing was not awaited; check App Store Connect before submission.')
+        return
+      end
 
       # wait for screenshots to be processed on App Store Connect end and
       # ensure the number of uploaded screenshots matches the one in local
@@ -100,6 +106,9 @@ module Deliver
     # This is a testable method that focuses on figuring out what to update
     def do_replace_screenshots(iterator, screenshots, delete_worker, upload_worker)
       remote_screenshots = iterator.each_app_screenshot.map do |localization, app_screenshot_set, app_screenshot|
+        if app_screenshot.source_file_checksum.to_s.empty?
+          UI.user_error!("Screenshot #{app_screenshot.id} (#{localization.locale}/#{app_screenshot.file_name}) has no final checksum; inspect its processing state before syncing")
+        end
         ScreenshotComparable.create_from_remote(app_screenshot: app_screenshot, locale: localization.locale)
       end
 

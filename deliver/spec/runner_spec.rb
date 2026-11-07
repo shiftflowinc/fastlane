@@ -379,7 +379,8 @@ describe Deliver::Runner do
         app_previews_path: options[:app_previews_path],
         preview_frame_time_code: options[:preview_frame_time_code],
         overwrite_preview_videos: options[:overwrite_preview_videos],
-        wait_for_processing: true
+        wait_for_processing: true,
+        sync_app_previews: nil
       ).and_return(previews_double)
       expect(previews_double).to receive(:sync_from_path)
 
@@ -394,10 +395,12 @@ describe Deliver::Runner do
 
     it 'uses SyncScreenshots when sync_screenshots is true' do
       options[:sync_screenshots] = true
+      options[:skip_waiting_for_screenshot_processing] = true
       screenshots_double = instance_double(Deliver::SyncScreenshots)
       expect(Deliver::SyncScreenshots).to receive(:new).with(
         app: Deliver.cache[:app],
-        platform: Spaceship::ConnectAPI::Platform.map(options[:platform])
+        platform: Spaceship::ConnectAPI::Platform.map(options[:platform]),
+        wait_for_processing: false
       ).and_return(screenshots_double)
       expect(screenshots_double).to receive(:sync).with([])
       expect(fake_upload_screenshots).not_to receive(:upload)

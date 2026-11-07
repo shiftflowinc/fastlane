@@ -169,6 +169,10 @@ module Deliver
                                      description: "Return after App Preview uploads are accepted, without waiting for processing or selecting a still frame",
                                      type: Boolean,
                                      default_value: false),
+        FastlaneCore::ConfigItem.new(key: :sync_app_previews,
+                                     description: "Replace only changed App Preview videos in selected locales, preserving matching filenames and checksums",
+                                     type: Boolean,
+                                     default_value: false),
 
         # skip
         FastlaneCore::ConfigItem.new(key: :skip_binary_upload,

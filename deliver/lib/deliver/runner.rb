@@ -165,7 +165,8 @@ module Deliver
       upload_metadata.upload
 
       if options[:sync_screenshots]
-        sync_screenshots = SyncScreenshots.new(app: Deliver.cache[:app], platform: Spaceship::ConnectAPI::Platform.map(options[:platform]))
+        sync_screenshots = SyncScreenshots.new(app: Deliver.cache[:app], platform: Spaceship::ConnectAPI::Platform.map(options[:platform]),
+                                               wait_for_processing: !options[:skip_waiting_for_screenshot_processing])
         sync_screenshots.sync(screenshots)
       else
         upload_screenshots.upload(options, screenshots)
@@ -178,6 +179,7 @@ module Deliver
           app_previews_path: options[:app_previews_path],
           preview_frame_time_code: options[:preview_frame_time_code],
           overwrite_preview_videos: options[:overwrite_preview_videos],
+          sync_app_previews: options[:sync_app_previews],
           wait_for_processing: !options[:skip_waiting_for_app_preview_processing]
         )
         previews.sync_from_path
