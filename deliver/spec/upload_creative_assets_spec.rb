@@ -85,7 +85,7 @@ describe Deliver::UploadCreativeAssets do
 
     it 'uploads and places a creative image even when screenshots are skipped' do
       options[:skip_screenshots] = true
-      expect(Spaceship::ConnectAPI::AppAssetLibraryImage).to receive(:create).with(app_asset_library_id: library.id, path: @path, category: 'CREATIVE_ASSETS').and_return(image)
+      expect(Spaceship::ConnectAPI::AppAssetLibraryImage).to receive(:create).with(app_asset_library_id: library.id, path: @path, category: 'CREATIVE_ASSETS', processing_timeout: 900).and_return(image)
       expect(Spaceship::ConnectAPI::AppAssetLibraryPlacement).to receive(:create).with(app_store_version_localization_id: localization.id, image_id: image.id, placement_type: entry[:placement_type], placement_group: entry[:placement_group])
       uploader.upload(options)
     end
@@ -95,6 +95,26 @@ describe Deliver::UploadCreativeAssets do
       reference.features.first['placementPolicies'].first['placementType'] = entry[:placement_type]
       reference.placement_types.first['placementTypeId'] = entry[:placement_type]
       expect(Spaceship::ConnectAPI::AppAssetLibraryPlacement).to receive(:create).with(hash_including(placement_type: 'APP_STORE_SEARCH_RESULTS_ASSET'))
+      uploader.upload(options)
+    end
+
+    it 'allows an accepted header to finish processing after five minutes before placing it' do
+      image_class = Spaceship::ConnectAPI::AppAssetLibraryImage
+      client = double('image client')
+      reservation = image_class.new('image-id', { state: 'AWAITING_UPLOAD', upload_operations: [] })
+      processing = image_class.new('image-id', { state: 'UPLOAD_COMPLETE' })
+      ready = image_class.new('image-id', { state: 'PREPARE_FOR_SUBMISSION', spec_id: 'image-spec' })
+      allow(client).to receive(:post_app_asset_library_image).and_return([reservation])
+      allow(client).to receive(:patch_app_asset_library_image).and_return([processing])
+      allow(client).to receive(:get_app_asset_library_image).and_return([processing], [ready])
+      allow(Spaceship::ConnectAPI::FileUploader).to receive(:upload)
+      allow(image_class).to receive(:sleep)
+      allow(Process).to receive(:clock_gettime).with(Process::CLOCK_MONOTONIC).and_return(0, 0, 554)
+      allow(image_class).to receive(:create).and_wrap_original do |original, **arguments|
+        original.call(**arguments, client: client)
+      end
+      expect(Spaceship::ConnectAPI::AppAssetLibraryPlacement).to receive(:create).with(hash_including(image_id: ready.id))
+
       uploader.upload(options)
     end
 

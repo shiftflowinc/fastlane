@@ -1,6 +1,6 @@
 # ShiftFlow fork of fastlane
 
-This fork exists so ShiftFlow can upload App Store creative assets (the iOS 27 product page header and the search results image) before upstream fastlane releases that feature. Flowfront pins its `Gemfile` to a commit on the `shiftflow/creative-assets` branch.
+This fork exists so ShiftFlow can upload App Store creative assets (the iOS 27 product page header and the search results image) before upstream fastlane releases that feature. Flowfront pins its `Gemfile` to an exact commit containing this header support. Keep this fork limited to creative-asset/header support; screenshots and preview videos use upstream implementations without local patches.
 
 ## What the branch carries
 
@@ -12,7 +12,7 @@ The `shiftflow/creative-assets` branch is the released tag `2.241.2` plus the th
 | `6af3a362d` | address creative asset review feedback |
 | `75aae1176` | Harden creative asset retries and replacement failures |
 
-The PR adds the `creative_assets` and `overwrite_creative_assets` options to `deliver` and the spaceship models for Apple's App Asset Library. The tracking issue is [fastlane/fastlane#30461](https://github.com/fastlane/fastlane/issues/30461).
+The PR adds the `creative_assets` and `overwrite_creative_assets` options to _deliver_ and the spaceship models for Apple's App Asset Library. The tracking issue is [fastlane/fastlane#30461](https://github.com/fastlane/fastlane/issues/30461).
 
 The PR's focused specs pass on this branch:
 
@@ -22,10 +22,10 @@ bundle exec rspec deliver/spec/upload_creative_assets_spec.rb deliver/spec/runne
   spaceship/spec/client_spec.rb
 ```
 
-Live placement creation against App Store Connect was not exercised by the PR author. Treat the first real upload as the first live test.
+Header uploads allow up to fifteen minutes for Apple image processing before placement, because the processed image specification is required.
 
 ## When to drop this fork
 
 Drop the fork once fastlane/fastlane#30442 ships in a fastlane release. Point Flowfront back at the released gem (`gem "fastlane", "~> 2.241"` or the release that contains the feature), then archive or delete this repository.
 
-To move to a newer fastlane release before then, cut a new branch from that release tag, cherry-pick the same three commits, rerun the specs above, and update the pinned SHA in Flowfront.
+To move to a newer fastlane release before then, cut a new branch from that release tag, cherry-pick the same three commits and the header processing allowance, rerun the specs above, and update the pinned SHA in Flowfront.
