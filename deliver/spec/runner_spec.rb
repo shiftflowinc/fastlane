@@ -379,8 +379,7 @@ describe Deliver::Runner do
         app_previews_path: options[:app_previews_path],
         preview_frame_time_code: options[:preview_frame_time_code],
         overwrite_preview_videos: options[:overwrite_preview_videos],
-        wait_for_processing: true,
-        sync_app_previews: nil
+        wait_for_processing: true
       ).and_return(previews_double)
       expect(previews_double).to receive(:sync_from_path)
 
